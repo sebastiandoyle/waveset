@@ -272,19 +272,6 @@ footer a{color:var(--sky)}
   </div>
 </section>
 
-<section class="fc" id="forecast">
-  <div class="wrap">
-    <p class="eyebrow reveal" style="color:var(--deep)">Live · updates every visit</p>
-    <h2 class="d reveal">Today's curl forecast.</h2>
-    <p class="sub reveal" style="color:var(--deep)">Surf forecasts tell you about the waves. This one tells you what the humidity and wind will do to your hair at three local breaks.</p>
-    <div class="spots" id="spots">
-      <div class="spot" data-lat="-27.427" data-lon="153.546" data-name="Point Lookout" data-where="North Stradbroke Island"></div>
-      <div class="spot" data-lat="-28.089" data-lon="153.457" data-name="Burleigh Heads" data-where="Gold Coast"></div>
-      <div class="spot" data-lat="-28.164" data-lon="153.549" data-name="Snapper Rocks" data-where="Coolangatta"></div>
-    </div>
-    <small>Weather and swell data: Open-Meteo. The frizz index is our own maths: humidity plus wind. Don't make life decisions with it.</small>
-  </div>
-</section>
 
 <section class="quiz" id="quiz">
   <div class="wrap">
@@ -368,35 +355,6 @@ const vio=new IntersectionObserver(es=>es.forEach(e=>{
 document.querySelectorAll('video[data-src]').forEach(v=>vio.observe(v));
 const hv=document.querySelector('.hero video');hv.play().catch(()=>{});
 hv.addEventListener('playing',()=>{const p=document.querySelector('.hero .poster');if(p)p.style.display='none'});
-
-// curl forecast
-function frizz(rh,wind){const h=Math.min(1,Math.max(0,(rh-45)/45)),w=Math.min(1,Math.max(0,(wind-5)/30));return Math.round(h*62+w*38)}
-function verdict(s){
-  if(s<30) return ["Curls behaving.","Barely need it today, but one scoop won't hurt."];
-  if(s<55) return ["Frizz watch.","One scoop on wet hair before you leave the carpark."];
-  if(s<75) return ["Riddler conditions.","A full scoop, and don't touch it until lunch."];
-  return ["Toilet brush warning.","Scoop, scrunch, and stay out of the wind."];
-}
-document.querySelectorAll('.spot').forEach(async el=>{
-  const {lat,lon,name,where}=el.dataset;
-  el.innerHTML=`<h3 class="d">${name}</h3><div class="where">${where}</div><div class="meter"><i style="left:50%"></i></div><div class="verdict">Checking the sky…</div><div class="stats"></div><div class="advice"></div>`;
-  try{
-    const [w,m]=await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=relative_humidity_2m,wind_speed_10m,temperature_2m&timezone=Australia%2FBrisbane`).then(r=>r.json()),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=wave_height,swell_wave_period&timezone=Australia%2FBrisbane`).then(r=>r.json()).catch(()=>null)
-    ]);
-    const rh=w.current.relative_humidity_2m, wind=w.current.wind_speed_10m, t=w.current.temperature_2m;
-    const s=frizz(rh,wind), [v,a]=verdict(s);
-    el.querySelector('.meter i').style.left=Math.max(4,Math.min(96,s))+'%';
-    el.querySelector('.verdict').innerHTML=`${v} <span style="font:800 14px var(--body);letter-spacing:.08em;color:var(--ocean);white-space:nowrap">FRIZZ ${s}/100</span>`;
-    const wave=m&&m.current&&m.current.wave_height!=null?`${m.current.wave_height.toFixed(1)} m waves`:'';
-    el.querySelector('.stats').innerHTML=[`${Math.round(t)}°C`,`${rh}% humidity`,`${Math.round(wind)} km/h wind`,wave].filter(Boolean).map(x=>`<span>${x}</span>`).join('');
-    el.querySelector('.advice').textContent=a;
-  }catch(e){
-    el.querySelector('.verdict').textContent='Forecast took a wipeout.';
-    el.querySelector('.advice').textContent='Assume humid. It\'s Queensland.';
-  }
-});
 
 // quiz
 const Q=[
